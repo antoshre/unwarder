@@ -3,6 +3,8 @@ unwarder
 
 Unwards a chunk
 
+**REQUIRES pymclevel somewhere in your path.**
+
 ****
 ##Usage
 
