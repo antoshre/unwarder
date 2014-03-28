@@ -21,6 +21,10 @@ parser.add_option("--commit", dest="dryrun", default=True,
 		  action="store_false",
 		  help="Write changes to disk")
 
+parser.add_option("--dirtocalypse", dest="dirtocalypse", default=False,
+		  action="store_true",
+		  help="Replace warded blocks with dirt")
+
 (options,args) = parser.parse_args()
 
 if options.xPos is None or options.zPos is None or options.filename is None:
@@ -34,7 +38,8 @@ logging.debug("xPos: %d zPos: %d dryrun: %r filename: %s",options.xPos,options.z
 
 if options.dryrun:
   logging.info("Dry run enabled, no changes will be written.") 
- 
+else:
+  logging.info("!!! Not a dry run!  Will be writing to disk!")
 #Load level
 try:
   level = mclevel.fromFile(options.filename)
@@ -100,8 +105,22 @@ for entity in wardedTE:
   
   
   if not options.dryrun:
-    chunk.Blocks[xOffset,zOffset,entity["y"].value] = entity["bi"].value
-    chunk.Data[xOffset,zOffset,entity["y"].value] = entity["md"].value
-    logging.debug("\tWrote bi: %d md: %d",entity["bi"].value,entity["md"].value)
+    #Change the blocks
+    if options.dirtocalypse:
+      dirtID = level.materials["Dirt"].ID
+      dirtMeta = level.materials["Dirt"].blockData
+      chunk.Blocks[xOffset,zOffset,entity["y"].value] = dirtID
+      chunk.Data[xOffset,zOffset,entity["y"].value] = dirtMeta
+      logging.debug("\tWrote bi: %d md: %d", dirtID, dirtMeta)
+    else:
+      chunk.Blocks[xOffset,zOffset,entity["y"].value] = entity["bi"].value
+      chunk.Data[xOffset,zOffset,entity["y"].value] = entity["md"].value
+      logging.debug("\tWrote bi: %d md: %d",entity["bi"].value,entity["md"].value)
+      
+    #Remove the entities
+    chunk.TileEntities.remove(entity)
+    #Mark as changed for compression and saving
     chunk.chunkChanged()
+    level.generateLights()
+    #Save
     level.saveInPlace()
