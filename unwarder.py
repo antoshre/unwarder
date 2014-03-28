@@ -1,50 +1,55 @@
-dryrun = True #Don't actually change anything
-#dryrun = False #Write changes to disk
-
 import sys
+import logging
+
 sys.path.append("/home/rob/Downloads/") #Point to where the pymclevel folder is
+
+from optparse import OptionParser
 from pymclevel import *
 
-import logging
+usage = "usage: %prog [OPTIONS]\n\t Example: %prog -x 100 -z 100 -f \"~/level.dat\""
+parser = OptionParser(usage)
+parser.add_option("-x","--xPos", dest="xPos",metavar="XPOS",
+		  action="store", type="int",
+		  help="X coordinate for target chunk")
+
+parser.add_option("-z","--zPos", dest="zPos", metavar="ZPOS",
+		  action="store", type="int",
+		  help="Z coordinate for target chunk")
+
+parser.add_option("-f","--file", dest="filename", metavar="FILE",
+		  action="store", type="string",
+		  help="Filename of level.dat")
+
+parser.add_option("--commit", dest="dryrun", default=True,
+		  action="store_false",
+		  help="Write changes to disk")
+
+(options,args) = parser.parse_args()
+
+if options.xPos is None or options.zPos is None or options.filename is None:
+  sys.exit("Argument parse error")
+
 logging.basicConfig(level=logging.DEBUG, filename="unwarder.log",format="%(asctime)s - %(levelname)s: %(message)s", datefmt='%I:%M:%S %p', filemode='w')
 logging.debug("\tLog Start")
 
 logging.debug("Options supplied:")
-logging.debug(sys.argv[1:])
+logging.debug("xPos: %d zPos: %d dryrun: %r filename: %s",options.xPos,options.zPos,options.dryrun,options.filename)
 
-if dryrun:
-  logging.info("Dry run enabled, no changes will be written.")
-
-
-if len(sys.argv) < 3:
-  logging.debug("Too few options given")
-  sys.exit("Too few arguments, expects two")
-  
-#Read in coordinates from terminal
-#Chunk to target in world coordinates.
-try:
-  xPos = int(sys.argv[1])
-  zPos = int(sys.argv[2])
-except TypeError:
-  logging.debug("TypeError when parsing arguments")
-  sys.exit("Argument TypeError")
-except ValueError:
-  logging.debug("ValueError when parsing arguments")
-  sys.exit("Argument ValueError")
- 
+if options.dryrun:
+  logging.info("Dry run enabled, no changes will be written.") 
  
 #Load level
 try:
-  level = mclevel.fromFile("/home/rob/.technic/modpacks/goonimati-forge/saves/Flat (testing)/level.dat")
+  level = mclevel.fromFile(options.filename)
 except IOError:
-  logging.debug("IO error on file opening.  Fuck.")
+  logging.debug("IO error on file opening.  Fuck.  Check the path.")
   sys.exit("IO error")
-  
+    
 #Load chunk
 try:
-  chunk = level.getChunk(xPos/16,zPos/16)
+  chunk = level.getChunk(options.xPos/16,options.zPos/16)
 except ChunkNotPresent:
-  logging.debug("chunk not preset?! x: %d z: %d",xPos,zPos)
+  logging.debug("chunk not preset?! x: %d z: %d",options.xPos,options.zPos)
   sys.exit("Chunk not present error")
 
 if chunk is None:
@@ -97,7 +102,7 @@ for entity in wardedTE:
   logging.debug("\tBlock matches fake warded ID, ready to be replaced")
   
   
-  if not dryrun:
+  if not options.dryrun:
     chunk.Blocks[xOffset,zOffset,entity["y"].value] = entity["bi"].value
     chunk.Data[xOffset,zOffset,entity["y"].value] = entity["md"].value
     logging.debug("\tWrote bi: %d md: %d",entity["bi"].value,entity["md"].value)
