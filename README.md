@@ -10,7 +10,7 @@ Unwards a chunk
 
 ####Example:
 
-Say I want to see all warded blocks in the chunk that contains the block 700,600 in a world whose level.dat is located at ~/Herp/Derp/level.dat
+Say I want to see all warded blocks in the chunk that contains the block 700,600 in a world whose level.dat is located at /Herp/Derp/level.dat
 
 >python unwarder.py -x 700 -z 600 -f "/Herp/Derp"
 
