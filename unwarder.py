@@ -1,8 +1,5 @@
 import sys
 import logging
-
-sys.path.append("/home/rob/Downloads/") #Point to where the pymclevel folder is
-
 from optparse import OptionParser
 from pymclevel import *
 
