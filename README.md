@@ -3,20 +3,22 @@ unwarder
 
 Unwards a chunk
 
-Filename of level is hard-coded.  Couldn't find a way to read in as an argument without breaking spaces and whatnot.  Must be changed to do anything useful.
-
-'dryrun' at the top of the file changes whether it attempts to actually unward blocks.
-
 ****
 ##Usage
 
->python unwarder.py <xPos> <zPos>
+>python unwarder.py -x [XPOS] -z [ZPOS] -f [FILE] \(--commit\)
 
 ####Example:
 
-Say I want to unward a chunk that contains the block 700,600.
+Say I want to see all warded blocks in the chunk that contains the block 700,600 in a world whose level.dat is located at ~/Herp/Derp/level.dat
 
->python unwarder.py 700 600
+>python unwarder.py -x 700 -z 600 -f "~/Herp/Derp"
+
+This will not write anything to the world, merely dumping contents into the log.
+
+Looked over the log and nothing looks wrong?
+
+>python unwarder.py -x 700 -z 600 -f "~/Herp/Derp" --commit
 
 ****
 unwarder.log is the log file. In the event of an error it may help track exactly where the process went wrong.
