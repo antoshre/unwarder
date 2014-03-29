@@ -4,21 +4,21 @@ unwarder
 Unwards a chunk
 
 ****
-Usage: unwarder.py [OPTIONS]  
-         Example: unwarder.py -x 100 -z 100 -f "~/level.dat"
+`Usage: unwarder.py [OPTIONS]`  
+`         Example: unwarder.py -x 100 -z 100 -f "/dir/of/world"`
 
-Options:
-  -h, --help            show this help message and exit  
-  -x XPOS, --xPos=XPOS  X coordinate for target chunk  
-  -z ZPOS, --zPos=ZPOS  Z coordinate for target chunk  
-  -f FILE, --file=FILE  Directory that contains level.dat  
-  --commit              Write changes to disk  
-  --dirtocalypse        Replace warded blocks with dirt  
+`Options:`  
+`  -h, --help            show this help message and exit`  
+`  -x XPOS, --xPos=XPOS  X coordinate for target chunk`  
+`  -z ZPOS, --zPos=ZPOS  Z coordinate for target chunk`  
+`  -f FILE, --file=FILE  Directory that contains level.dat`  
+`  --commit              Write changes to disk`  
+`  --dirtocalypse        Replace warded blocks with dirt`  
 
 ****
 TODO:
 
-Change option text so it makes sense.  "`-f`" isn't pointing at a file, should be "`-d`" or something.
+Change option text so it makes sense.  `-f` isn't pointing at a file, should be `-d` or something.
   
   
 ####Example:
