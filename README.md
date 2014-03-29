@@ -11,10 +11,16 @@ Options:
   -h, --help            show this help message and exit  
   -x XPOS, --xPos=XPOS  X coordinate for target chunk  
   -z ZPOS, --zPos=ZPOS  Z coordinate for target chunk  
-  -f FILE, --file=FILE  Filename of level.dat  
+  -f FILE, --file=FILE  Directory that contains level.dat  
   --commit              Write changes to disk  
   --dirtocalypse        Replace warded blocks with dirt  
 
+****
+TODO:
+
+Change option text so it makes sense.  "`-f`" isn't pointing at a file, should be "`-d`" or something.
+  
+  
 ####Example:
 
 Say I want to see all warded blocks in the chunk that contains the block 700,600 in a world whose level.dat is located at /Herp/Derp/level.dat
