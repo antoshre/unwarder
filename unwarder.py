@@ -3,7 +3,7 @@ import logging
 from optparse import OptionParser
 from pymclevel import *
 
-usage = "usage: %prog [OPTIONS]\n\t Example: %prog -x 100 -z 100 -f \"~/level.dat\""
+usage = "usage: %prog [OPTIONS]\n\t Example: %prog -x 100 -z 100 -f \"/minecraft/saves/worldFolder/\""
 parser = OptionParser(usage)
 parser.add_option("-x","--xPos", dest="xPos",metavar="XPOS",
 		  action="store", type="int",
@@ -27,8 +27,12 @@ parser.add_option("--dirtocalypse", dest="dirtocalypse", default=False,
 
 (options,args) = parser.parse_args()
 
-if options.xPos is None or options.zPos is None or options.filename is None:
-  sys.exit("Argument parse error")
+if options.xPos is None:
+  parser.error("x position not given")
+if options.zPos is None:
+  parser.error("z position not given")
+if options.filename is None:
+  parser.error("filename not given")
 
 logging.basicConfig(level=logging.DEBUG, filename="unwarder.log",format="%(asctime)s - %(levelname)s: %(message)s", datefmt='%I:%M:%S %p', filemode='w')
 logging.debug("\tLog Start")

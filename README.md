@@ -8,12 +8,12 @@ Usage: unwarder.py [OPTIONS]
          Example: unwarder.py -x 100 -z 100 -f "~/level.dat"
 
 Options:
-  -h, --help            show this help message and exit
-  -x XPOS, --xPos=XPOS  X coordinate for target chunk
-  -z ZPOS, --zPos=ZPOS  Z coordinate for target chunk
-  -f FILE, --file=FILE  Filename of level.dat
-  --commit              Write changes to disk
-  --dirtocalypse        Replace warded blocks with dirt
+  -h, --help            show this help message and exit  
+  -x XPOS, --xPos=XPOS  X coordinate for target chunk  
+  -z ZPOS, --zPos=ZPOS  Z coordinate for target chunk  
+  -f FILE, --file=FILE  Filename of level.dat  
+  --commit              Write changes to disk  
+  --dirtocalypse        Replace warded blocks with dirt  
 
 ####Example:
 
