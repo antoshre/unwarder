@@ -135,11 +135,15 @@ for entity in TElist: #for all entities in the list:
       
     #Remove the entities
     chunk.TileEntities.remove(entity.entity)
-    
-    #Mark as changed for compression and saving
-    chunk.chunkChanged()
-    level.generateLights()
-    #Save
-    level.saveInPlace()
-    
+#end for
+
+if not options.dryrun:
+  #Mark as changed
+  chunk.chunkChanged()
+  #Update lighting, probably not necessary
+  level.generateLights()
+  #Save.
+  level.saveInPlace()
+  print "Changes committed."
+  
 print "Done"
