@@ -2,20 +2,21 @@ import sys
 import logging
 from optparse import OptionParser
 from pymclevel import *
+from collections import namedtuple
 
-usage = "usage: %prog [OPTIONS]\n\t Example: %prog -x 100 -z 100 -f \"/minecraft/saves/worldFolder/\""
+usage = "usage: %prog [OPTIONS]\n\t Example: %prog -x 1 -z -1 -p \"/minecraft/saves/worldFolder/\""
 parser = OptionParser(usage)
-parser.add_option("-x","--xPos", dest="xPos",metavar="XPOS",
+parser.add_option("-x","--xchunk", dest="xc",metavar="XC",
 		  action="store", type="int",
-		  help="X coordinate for target chunk")
+		  help="xc of chunk coord (xc,zc)")
 
-parser.add_option("-z","--zPos", dest="zPos", metavar="ZPOS",
+parser.add_option("-z","--zchunk", dest="zc", metavar="ZC",
 		  action="store", type="int",
-		  help="Z coordinate for target chunk")
+		  help="zc of chunk coord (xc,zc)")
 
-parser.add_option("-f","--file", dest="filename", metavar="FILE",
+parser.add_option("-p","--path", dest="pathname", metavar="PATH",
 		  action="store", type="string",
-		  help="Filename of level.dat")
+		  help="Path of directory containing level.dat")
 
 parser.add_option("--commit", dest="dryrun", default=True,
 		  action="store_false",
@@ -27,42 +28,44 @@ parser.add_option("--dirtocalypse", dest="dirtocalypse", default=False,
 
 (options,args) = parser.parse_args()
 
-if options.xPos is None:
-  parser.error("x position not given")
-if options.zPos is None:
-  parser.error("z position not given")
-if options.filename is None:
-  parser.error("filename not given")
+if options.xc is None:
+  parser.error("xc required")
+if options.zc is None:
+  parser.error("zc required")
+if options.pathname is None:
+  parser.error("world path required")
 
 logging.basicConfig(level=logging.DEBUG, filename="unwarder.log",format="%(asctime)s - %(levelname)s: %(message)s", datefmt='%I:%M:%S %p', filemode='w')
 logging.debug("\tLog Start")
 
 logging.debug("Options supplied:")
-logging.debug("xPos: %d zPos: %d dryrun: %r filename: %s",options.xPos,options.zPos,options.dryrun,options.filename)
+logging.debug("xc: %d zc: %d dryrun: %r path: %s",options.xc,options.zc,options.dryrun,options.pathname)
 
 if options.dryrun:
   logging.info("Dry run enabled, no changes will be written.") 
+  print "Dry run enabled."
 else:
   logging.info("!!! Not a dry run!  Will be writing to disk!")
+  print "Dry run disabled.\n[!]Changes will be committed to disk[!]"
 #Load level
 try:
-  level = mclevel.fromFile(options.filename)
+  level = mclevel.fromFile(options.pathname)
 except IOError:
-  logging.debug("IO error on file opening.  Fuck.  Check the path.")
+  logging.debug("IO error on file opening. Double-check the path.")
   sys.exit("IO error")
     
 #Load chunk
 try:
-  chunk = level.getChunk(options.xPos/16,options.zPos/16)
+  chunk = level.getChunk(options.xc,options.zc)
 except ChunkNotPresent:
-  logging.debug("chunk not preset?! x: %d z: %d",options.xPos,options.zPos)
-  sys.exit("Chunk not present error")
+  logging.debug("Chunk not present")
+  sys.exit("Chunk not present")
 
 if chunk is None:
-  logging.warn("chunk is None. How the fuck-")
-  sys.exit("chunk is none?")
+  logging.warn("chunk is None. How the fu-")
+  sys.exit("chunk is none?!")
 
-#ID 4035 warded shit
+#ID 4035 warded block ID
 
 """ Find all TileEntities associated with warded blocks
   "id" = u'TileWarded'
@@ -75,34 +78,42 @@ if chunk is None:
   "z" = TAG_Int, z location
 """
 
-wardedTE = []
-for entity in chunk.TileEntities:
-  if entity["id"].value == u'TileWarded':
-    if "bi" in entity:
-      if "md" in entity:
-        wardedTE.append(entity)
+wardedTE = namedtuple('wardedTE','x y z bID meta owner entity')
+
+TElist = []
+
+for entity in chunk.TileEntities: #for all entities in the chunk:
+  if entity["id"].value == u'TileWarded': #is it a warded entity?
+    if "bi" in entity:	#Does it have a blockid value?  (sanity check)
+      if "md" in entity:  #Does it have a meta value? (sanity check)
+        TElist.append( wardedTE(entity["x"].value, entity["y"].value, entity["z"].value,
+				entity["bi"].value, entity["md"].value, entity["owner"].value,entity))
         
-logging.debug("%d warded TileEntites found.", len(wardedTE))
+logging.debug("%d warded TEs found", len(TElist))
 
-if len(wardedTE) == 0:
+
+if len(TElist) == 0:
   sys.exit("No warded TileEntites detected")
+else:
+  print "%d warded TEs found" % len(TElist)
 
-for entity in wardedTE:
-  logging.debug("TE @ x: %d y: %d z: %d",entity["x"].value,entity["y"].value,entity["z"].value)
-  logging.debug("\tbId: %d meta: %d",entity["bi"].value,entity["md"].value)
+for entity in TElist: #for all entities in the list:
   
-  if entity["bi"].value < 0:
-    logging.warning("bId out of range!")
-    sys.exit("bId out of range")
-  if entity["md"].value < 0 or entity["md"].value > 16:
-    logging.warning("meta out of range!")
+  logging.debug("TE @ x: %d y: %d z: %d", entity.x, entity.y, entity.z)
+  logging.debug("\t bID: %d meta: %d owner: %s", entity.bID, entity.meta, entity.owner)
+  
+  if entity.bID < 0:
+    logging.warning("\tbID out of range!")
+    sys.exit("bID out of range")
+  if entity.meta < 0 or entity.meta > 16:
+    logging.warning("\tmeta out of range!")
     sys.exit("meta out of range")
-  
-  xOffset = entity["x"].value % 16
-  zOffset = entity["z"].value % 16
+    
+  xOffset = entity.x % 16
+  zOffset = entity.z % 16
   #y offset not required
   
-  if chunk.Blocks[xOffset,zOffset,entity["y"].value] != 4035:
+  if chunk.Blocks[xOffset,zOffset,entity.y] != 4035:
     logging.warning("\tBlock not the fake warded ID!")
     sys.exit("ID isn't fake warded")
   logging.debug("\tBlock matches fake warded ID, ready to be replaced")
@@ -110,21 +121,25 @@ for entity in wardedTE:
   
   if not options.dryrun:
     #Change the blocks
+    
     if options.dirtocalypse:
-      dirtID = level.materials["Dirt"].ID
-      dirtMeta = level.materials["Dirt"].blockData
-      chunk.Blocks[xOffset,zOffset,entity["y"].value] = dirtID
-      chunk.Data[xOffset,zOffset,entity["y"].value] = dirtMeta
-      logging.debug("\tWrote bi: %d md: %d", dirtID, dirtMeta)
+      bIDTo = level.materials["Dirt"].ID
+      metaTo = level.materials["Dirt"].blockData
     else:
-      chunk.Blocks[xOffset,zOffset,entity["y"].value] = entity["bi"].value
-      chunk.Data[xOffset,zOffset,entity["y"].value] = entity["md"].value
-      logging.debug("\tWrote bi: %d md: %d",entity["bi"].value,entity["md"].value)
+      bIDTo = entity.bID
+      metaTo = entity.meta
+    
+    chunk.Blocks[xOffset,zOffset,entity.y] = bIDTo
+    chunk.Data[xOffset,zOffset,entity.y] = metaTo
+    logging.debug("\tWrote bi: %d md: %d",bIDTo, metaTo)
       
     #Remove the entities
-    chunk.TileEntities.remove(entity)
+    chunk.TileEntities.remove(entity.entity)
+    
     #Mark as changed for compression and saving
     chunk.chunkChanged()
     level.generateLights()
     #Save
     level.saveInPlace()
+    
+print "Done"

@@ -5,33 +5,37 @@ Unwards a chunk
 
 ****
 `Usage: unwarder.py [OPTIONS]`  
-`         Example: unwarder.py -x 100 -z 100 -f "/dir/of/world"`
-
+`         Example: unwarder.py -x 1 -z -1 -p "/minecraft/saves/worldFolder/"`  
+`  `  
 `Options:`  
 `  -h, --help            show this help message and exit`  
-`  -x XPOS, --xPos=XPOS  X coordinate for target chunk`  
-`  -z ZPOS, --zPos=ZPOS  Z coordinate for target chunk`  
-`  -f FILE, --file=FILE  Directory that contains level.dat`  
+`  -x XC, --xchunk=XC    xc of chunk coord (xc,zc)`  
+`  -z ZC, --zchunk=ZC    zc of chunk coord (xc,zc)`  
+`  -p PATH, --path=PATH  Path of directory containing level.dat`  
 `  --commit              Write changes to disk`  
 `  --dirtocalypse        Replace warded blocks with dirt`  
 
 ****
 TODO:
 
-Change option text so it makes sense.  `-f` isn't pointing at a file, should be `-d` or something.
+Cleanup
   
   
-####Example:
+##Example:
 
-Say I want to see all warded blocks in the chunk that contains the block 700,600 in a world whose level.dat is located at /Herp/Derp/level.dat
+####Remove all warded blocks in chunk (5,6) from world located at "/home/user/.minecraft/saves/world1"
 
->python unwarder.py -x 700 -z 600 -f "/Herp/Derp"
+First, do a dryrun to see if anything goes wrong:  
+>python unwarder.py -x 5 -z 6 -p "/home/user/.minecraft/saves/world1"
 
-This will not write anything to the world, merely dumping contents into the log.
+If no errors occur and the log looks good, commit:  
+>python unwarder.py -x 5 -z 6 -p "/home/user/.minecraft/saves/world1" --commit
 
-Looked over the log and nothing looks wrong?
+This should replace all warded blocks with their originals.  I am not responsible if this somehow destroys your world.  Backup **everything** beforehand.
 
->python unwarder.py -x 700 -z 600 -f "/Herp/Derp" --commit
+####Replace all warded blocks by dirt:
+
+Same as the first example, but use the `--dirtocalypse` flag.
 
 ****
 unwarder.log is the log file. In the event of an error it may help track exactly where the process went wrong.
