@@ -4,16 +4,18 @@ unwarder
 Unwards a chunk
 
 ****
-`Usage: unwarder.py [OPTIONS]`  
-`         Example: unwarder.py -x 1 -z -1 -p "/minecraft/saves/worldFolder/"`  
-`  `  
-`Options:`  
-`  -h, --help            show this help message and exit`  
-`  -x XC, --xchunk=XC    xc of chunk coord (xc,zc)`  
-`  -z ZC, --zchunk=ZC    zc of chunk coord (xc,zc)`  
-`  -p PATH, --path=PATH  Path of directory containing level.dat`  
-`  --commit              Write changes to disk`  
-`  --dirtocalypse        Replace warded blocks with dirt`  
+```
+Usage: unwarder.py [OPTIONS]  
+    Example: unwarder.py -x 1 -z -1 -p "/minecraft/saves/worldFolder/"  
+         
+Options:  
+  -h, --help            show this help message and exit  
+  -x XC, --xchunk=XC    xc of chunk coord (xc,zc)  
+  -z ZC, --zchunk=ZC    zc of chunk coord (xc,zc)  
+  -p PATH, --path=PATH  Path of directory containing level.dat  
+  --commit              Write changes to disk  
+  --dirtocalypse        Replace warded blocks with dirt  
+```
 
 ****
 TODO:
