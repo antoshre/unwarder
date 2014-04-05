@@ -22,9 +22,13 @@ parser.add_option("--commit", dest="dryrun", default=True,
 		  action="store_false",
 		  help="Write changes to disk")
 
-parser.add_option("--dirtocalypse", dest="dirtocalypse", default=False,
-		  action="store_true",
+parser.add_option("--dirtocalypse", dest="dirtocalypse",
+		  action="store_true", default=False,
 		  help="Replace warded blocks with dirt")
+
+parser.add_option("-v","--verbose", dest="verbose",
+		  action="store_true", default=False,
+		  help="Verbose log")
 
 (options,args) = parser.parse_args()
 
@@ -34,94 +38,71 @@ if options.zc is None:
   parser.error("zc required")
 if options.pathname is None:
   parser.error("world path required")
-
-logging.basicConfig(level=logging.DEBUG, filename="unwarder.log",format="%(asctime)s - %(levelname)s: %(message)s", datefmt='%I:%M:%S %p', filemode='w')
-logging.debug("\tLog Start")
-
-logging.debug("Options supplied:")
-logging.debug("xc: %d zc: %d dryrun: %r path: %s",options.xc,options.zc,options.dryrun,options.pathname)
-
-if options.dryrun:
-  logging.info("Dry run enabled, no changes will be written.") 
-  print "Dry run enabled."
+if options.verbose is False:
+  options.logLevel = logging.INFO
 else:
-  logging.info("!!! Not a dry run!  Will be writing to disk!")
-  print "Dry run disabled.\n[!]Changes will be committed to disk[!]"
+  options.logLevel = logging.DEBUG
+
+logging.basicConfig(level=options.logLevel,
+                    filename="unwarder.log",
+                    format="%(asctime)s - %(levelname)s: %(message)s",
+                    datefmt='%I:%M:%S %p',
+                    filemode='w')
+logger = logging.getLogger('unwarder')
+logger.info("\tLog Start")
+logger.debug("Options supplied:\n\t%s", options)
+
 #Load level
 try:
   level = mclevel.fromFile(options.pathname)
 except IOError:
-  logging.debug("IO error on file opening. Double-check the path.")
-  sys.exit("IO error")
+  sys.exit("IO error, check the path")
+
+logger.debug("Loaded level \"%s\", ",level.LevelName)
     
 #Load chunk
 try:
   chunk = level.getChunk(options.xc,options.zc)
 except ChunkNotPresent:
-  logging.debug("Chunk not present")
   sys.exit("Chunk not present")
+logger.debug("Loaded chunk %s",chunk.chunkPosition)
 
 if chunk is None:
-  logging.warn("chunk is None. How the fu-")
-  sys.exit("chunk is none?!")
+  sys.exit("Chunk is 'None', how did you do that?")
 
-#ID 4035 warded block ID
-
-""" Find all TileEntities associated with warded blocks
-  "id" = u'TileWarded'
-  "ll" = ?
-  "md" = TAG_Int, meta of original
-  "owner" = owner of block
-  "bi" = TAG_Int, block id of original
-  "x" = TAG_Int, x location
-  "y" = TAG_Int, y location
-  "z" = TAG_Int, z location
-"""
-
-wardedTE = namedtuple('wardedTE','x y z bID meta owner entity')
+wTE = namedtuple('wardedTE','x y z bID meta owner entity')
 
 TElist = []
-
 for entity in chunk.TileEntities: #for all entities in the chunk:
   if entity["id"].value == u'TileWarded': #is it a warded entity?
     if "bi" in entity:	#Does it have a blockid value?  (sanity check)
       if "md" in entity:  #Does it have a meta value? (sanity check)
-        TElist.append( wardedTE(entity["x"].value, entity["y"].value, entity["z"].value,
-				entity["bi"].value, entity["md"].value, entity["owner"].value,entity))
+        TElist.append( wTE(entity["x"].value, entity["y"].value, entity["z"].value, #unpack to named tuple to make access easier
+			   entity["bi"].value, entity["md"].value, entity["owner"].value, entity))
         
-logging.debug("%d warded TEs found", len(TElist))
-
+logger.info("%d warded TEs found", len(TElist))
 
 if len(TElist) == 0:
   sys.exit("No warded TileEntites detected")
-else:
-  print "%d warded TEs found" % len(TElist)
 
-for entity in TElist: #for all entities in the list:
-  
-  logging.debug("TE @ x: %d y: %d z: %d", entity.x, entity.y, entity.z)
-  logging.debug("\t bID: %d meta: %d owner: %s", entity.bID, entity.meta, entity.owner)
+for entity in TElist: #for every wardedTE:
+  logger.debug("%s",entity)
   
   if entity.bID < 0:
-    logging.warning("\tbID out of range!")
     sys.exit("bID out of range")
   if entity.meta < 0 or entity.meta > 16:
-    logging.warning("\tmeta out of range!")
     sys.exit("meta out of range")
     
   xOffset = entity.x % 16
   zOffset = entity.z % 16
   #y offset not required
   
+  #ID 4035 is the faked ID of a warded block.
   if chunk.Blocks[xOffset,zOffset,entity.y] != 4035:
-    logging.warning("\tBlock not the fake warded ID!")
-    sys.exit("ID isn't fake warded")
-  logging.debug("\tBlock matches fake warded ID, ready to be replaced")
-  
+    sys.exit("Block pointed at be wTE isn't warded fakeID")
   
   if not options.dryrun:
-    #Change the blocks
-    
+    #Change the blocks  
     if options.dirtocalypse:
       bIDTo = level.materials["Dirt"].ID
       metaTo = level.materials["Dirt"].blockData
@@ -131,19 +112,21 @@ for entity in TElist: #for all entities in the list:
     
     chunk.Blocks[xOffset,zOffset,entity.y] = bIDTo
     chunk.Data[xOffset,zOffset,entity.y] = metaTo
-    logging.debug("\tWrote bi: %d md: %d",bIDTo, metaTo)
+    logger.info("Wrote bID:meta %s to (x,y,z): %s",bIDTo,meta,(entity.x,entity.y,entity.z))
       
     #Remove the entities
     chunk.TileEntities.remove(entity.entity)
 #end for
 
 if not options.dryrun:
+  logger.info("Writing to disk")
   #Mark as changed
+  logger.debug("\tMark chunk as changed")
   chunk.chunkChanged()
   #Update lighting, probably not necessary
+  logger.debug("\tGenerate lights")
   level.generateLights()
   #Save.
+  logger.debug("\tSave")
   level.saveInPlace()
-  print "Changes committed."
-  
-print "Done"
+  logger.debug("Save complete")
